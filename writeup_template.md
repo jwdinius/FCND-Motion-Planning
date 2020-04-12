@@ -199,8 +199,9 @@ Here are some changes I had to make, along with justification of why I made them
 python motion_planning.py --goal=-122.397,37.7953,3.0 
 ```
 
-![First Path](misc/first-path.png | width=200)
-![First Gif](https://imgur.com/a/4RP2Cwb | width=200)
+![First Path](./misc/first-path.png)
+
+#![First Gif](https://imgur.com/a/4RP2Cwb)
 
 The path generated looks valid, which is good considering the point of this project is to plan a valid path between start and goal points.  However, running this path through the simulator proved quite challenging: the dynamics of the vehicle were erratic and, with window size S and M, the vehicle appears to crash and get stuck before completing the path.
 
