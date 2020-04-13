@@ -57,7 +57,7 @@ As far as the functions in planning_utils.py goes, I don't really know what more
 ### Implementing Your Path Planning Algorithm
 
 #### 1. Set your global home position
-Lines 123-133 of `motion_planning.py` shows my solution:
+Lines 129-139 of `motion_planning.py` shows my solution:
 
 ```python
 # TODO: read lat0, lon0 from colliders into floating point values
@@ -67,6 +67,7 @@ lat0 = float(lat.split(" ")[-1])
 lon0 = float(lon.split(" ")[-1])
 # TODO: set home position to (lon0, lat0, 0)
 self.set_home_position(lon0, lat0, 0)
+
 # TODO: retrieve current global position
 g_home = self.global_position
 print("Current global position: {}".format(g_home)) 
@@ -76,7 +77,7 @@ I used the built-in python "with open(...) as f" functionality to read the first
 
 #### 2. Set your current local position
 
-Lines 135-136 of `motion_planning.py` show my solution:
+Lines 141-142 of `motion_planning.py` show my solution:
 
 ```python
 # TODO: convert to current local position using global_to_local()
@@ -88,7 +89,7 @@ The solution leverages the method `global_to_local` from the Drone api.  The fir
 
 #### 3. Set grid start position from local position
 
-Lines 149-151 of `motion_planning.py` show my solution:
+Lines 177-179 of `motion_planning.py` show my solution:
 
 ```python
 # TODO: convert start position to current position rather than map center
@@ -100,7 +101,7 @@ The solution takes the local position of the vehicle and translates by the offse
 
 #### 4. Set grid goal position from geodetic coords
 
-Lines 155-158 of `motion_planning.py` show my solution:
+Lines 183-186 of `motion_planning.py` show my solution:
 
 ```python
 # TODO: adapt to set goal as latitude / longitude position and convert
@@ -115,7 +116,7 @@ grid_goal = (int(np.ceil(l_goal[0] - north_offset)),
 parser.add_argument('--goal', type=three_tuple, help='(lon, lat, alt) goal position (comma-separated)')
 ```
 
-`three_tuple` is a custom input type (see `project_utils.py` for definition).  This allows the user to set the goal position (in geodetic coordinates) from the command-line.
+`three_tuple` is a custom input type (see `project_utils.py` for definition).  This allows the user to set the goal position (in geodetic coordinates) from the command-line.  Note:  There is no default argument here so the program is expecting a goal position to be provided at runtime as a command line input.
 
 The `grid_goal` variable is in local coordinates, which is consistent with the `grid_start` definition above. 
 
@@ -192,9 +193,12 @@ Here are some changes I had to make, along with justification of why I made them
 
 * Modified `local_velocity_callback` to adjust transition altitude when landing.  I found that sometimes the ground level was above 0, which would cause the vehicle to be unable to transition to the disarm stage because it could not get to the 0.1 target altitude.  I now just check that the vehicle gets to between 0.97 and 1.03 times the goal altitude passed in from the command line.  This requires manual checking of geodetic altitude of ground height at the goal lat-lon, but this is not a huge deal.
 * I was seeing some strange timeout errors with the simulator, so I increased the timeout value in the MavlinkConnection from 60 sec to 300 sec.  I believe this is a consequence of the time it takes to plan a path, which depends on the length of the path.
-* I added some analysis code to pick interesting goal points based on a plot of the occupancy grid.  This code won't be executed during normal processing, but was useful in finding goal points in local coordinates (with map offset applied) and converting to geodetic coordinates to input at the command line.
+* I added logic to raise a `RuntimeError` if the path was empty or the starting point was sufficiently close to the goal.  I chose to raise an exception in this case just for visibility and to avoid the simulator throwing a different exception later on.
+* I added some analysis code to pick interesting goal points based on a plot of the occupancy grid.  This code won't be executed during normal processing, but was useful in finding goal points in local coordinates (with map offset applied) and converting to geodetic coordinates to input at the command line.  See Lines 154-173 of `motion_planning.py` for the actual implementation. 
 
 I planned five paths from the starting point and, for all but the first, aborted the remainder of the simulation after the plan was generated.  I did this because, on my computer, the time between sending waypoints and actually seeing the vehicle takeoff was unacceptably long.  For the first plan, I generated a video and uploaded it to YouTube.  All five paths generated show consecutive waypoints in free space, as expected.
+
+_A word about the plots below:  The starting point is a red "x", the goal point is a green "x", and the path found is shown in blue.  Waypoints are marked as blue "."._
 
 #### First Path
 
