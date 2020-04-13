@@ -156,11 +156,10 @@ class MotionPlanning(Drone):
             # goal points.  NOTE: THIS LOGIC SHOULD NOT BE EXERCISED IN NORMAL EXECUTION
             #show_grid(grid)
             # found the following interesting goals
-            interesting_goals = [[689.0, 589.0, -3.0],
-                                 [825.0, 329.5, -3.0],
-                                 [807.0, 124.0, -3.0],
-                                 [524.4, 733.0, -3.0],
-                                 [195.7, 800.0, -3.0]]
+            interesting_goals = [[743.0, 540.0, -3.0],
+                                 [325.0, 825.0, -3.0],
+                                 [124.0, 807.0, -3.0],
+                                 [800.0, 195.7, -3.0]]
             for l in interesting_goals:
                 l_np = np.array(l)
                 l_np[0] += north_offset
@@ -228,20 +227,18 @@ if __name__ == "__main__":
     # even it was still above the ground.  As long as height above ground for each lon,lat
     # is unknown at runtime, this is the best I could think of given the data I did observe.
     # interesting points I found (in geodetic coordinates) were:
-    # [-122.397, 37.7953, 3.0]
-    # [-122.39579045, 37.79583377, 3.0]
-    # [-122.39872787, 37.79707457, 3.0]
-    # [-122.40106325, 37.79692423, 3.0]
-    # [-122.39416704, 37.79434188, 3.0]
-    # [-122.39343030, 37.79137548, 3.0]
-
+    ##### [-122.397        37.7953        3.        ]
+    ##### [-122.39634302   37.79632331    3.        ]
+    ##### [-122.39313684   37.79253936    3.        ]
+    ##### [-122.39335608   37.79072886    3.        ]
+    ##### [-122.40024939   37.796857      3.        ]
     args = parser.parse_args()
 
     # XXX comment out this check if you want to pull up a plot to identify goal points
     if not args.goal:
         raise RuntimeError("User must specify a goal in geodetic coordinates")
 
-    conn = MavlinkConnection('tcp:{0}:{1}'.format(args.host, args.port), timeout=120)
+    conn = MavlinkConnection('tcp:{0}:{1}'.format(args.host, args.port), timeout=300)
     drone = MotionPlanning(conn, args.goal)
 
     time.sleep(1)

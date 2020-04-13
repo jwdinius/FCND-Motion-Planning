@@ -112,16 +112,16 @@ grid_goal = (int(np.ceil(l_goal[0] - north_offset)),
 `self.goal` is set from input set via the command-line:
 
 ```python
-parser.add_argument('--goal', type=geo, default="-122.397450,37.792480,3.0", help='(lon, lat, alt) goal position (comma-separated)')
+parser.add_argument('--goal', type=three_tuple, help='(lon, lat, alt) goal position (comma-separated)')
 ```
 
-`geo` is a custom input type (see `project_utils.py` for definition).  This allows the user to set the goal position (in geodetic coordinates) from the command-line.
+`three_tuple` is a custom input type (see `project_utils.py` for definition).  This allows the user to set the goal position (in geodetic coordinates) from the command-line.
 
 The `grid_goal` variable is in local coordinates, which is consistent with the `grid_start` definition above. 
 
 #### 5. Modify A* to include diagonal motion (or replace A* altogether)
 
-I decided to ditch the grid-based utilities provided for graph-based utilities for the following reasons:
+I decided to ditch the grid-based utilities provided and used graph-based utilitie instead.  I did so for the following reasons:
 
 * planned paths can get unacceptably close to obstacles, whereas graph-based methods allow construction of edges that are equidistant between obstacles
 * Voronoi tesselation creates a natural, with respect to occupied vs. unoccupied space, graph structure over the grid
@@ -137,7 +137,7 @@ This solution required writing new functions.  I put these new functions in the 
 * `closest_point` - find closest point on the graph to an input point
 * `heuristic_l1` - simple heuristic function for speeding up A-star search by favoring expansion in certain node directions.  The heuristic used is the Manhattan distance, the L1 norm.
 * `prune_waypoints` - prune path based on collinearity of waypoints
-* `calculate_waypoint` - this method pulls all other methods together so that only a single call needs to be made in `motion_planning.py`
+* `calculate_waypoints` - this method pulls all other methods together so that only a single call needs to be made in `motion_planning.py`
 
 #### 6. Cull waypoints 
 To cull collinear waypoints, I used the following logic:
@@ -191,9 +191,12 @@ The logic above is well-commented, so I will just highlight the key points here:
 Here are some changes I had to make, along with justification of why I made them:
 
 * Modified `local_velocity_callback` to adjust transition altitude when landing.  I found that sometimes the ground level was above 0, which would cause the vehicle to be unable to transition to the disarm stage because it could not get to the 0.1 target altitude.  I now just check that the vehicle gets to between 0.97 and 1.03 times the goal altitude passed in from the command line.  This requires manual checking of geodetic altitude of ground height at the goal lat-lon, but this is not a huge deal.
-* I was seeing some strange timeout errors with the simulator, so I increased the timeout value in the MavlinkConnection from 60 sec to 120 sec.  I believe this is a consequence of the time it takes to plan a path, which depends on the length of the path.
+* I was seeing some strange timeout errors with the simulator, so I increased the timeout value in the MavlinkConnection from 60 sec to 300 sec.  I believe this is a consequence of the time it takes to plan a path, which depends on the length of the path.
+* I added some analysis code to pick interesting goal points based on a plot of the occupancy grid.  This code won't be executed during normal processing, but was useful in finding goal points in local coordinates (with map offset applied) and converting to geodetic coordinates to input at the command line.
 
-#### First path
+I planned five paths from the starting point and, for all but the first, aborted the remainder of the simulation after the plan was generated.  I did this because, on my computer, the time between sending waypoints and actually seeing the vehicle takeoff was unacceptably long.  For the first plan, I generated a video and uploaded it to YouTube.  All five paths generated show consecutive waypoints in free space, as expected.
+
+#### First Path
 
 ```bash
 python motion_planning.py --goal=-122.397,37.7953,3.0 
@@ -201,25 +204,44 @@ python motion_planning.py --goal=-122.397,37.7953,3.0
 
 ![First Path](./misc/first-path.png)
 
-#![First Gif](https://imgur.com/a/4RP2Cwb)
+[First Path Flight Video](https://youtu.be/jWRZffjhqaA)
 
-The path generated looks valid, which is good considering the point of this project is to plan a valid path between start and goal points.  However, running this path through the simulator proved quite challenging: the dynamics of the vehicle were erratic and, with window size S and M, the vehicle appears to crash and get stuck before completing the path.
+As seen in the video, running this path through the simulator proved quite challenging: the dynamics of the vehicle were quite erratic.  However, the vehicle did fly through the desired path and did get close to the desired final goal position.
+
+#### Second Path
+
+```bash
+python motion_planning.py --goal=-122.39634302,37.79632331,3.0 
+```
+
+![Second Path](./misc/second-path.png)
+
+#### Third Path
+
+```bash
+python motion_planning.py --goal=-122.39313684,37.79253936,3.0 
+```
+
+![Third Path](./misc/third-path.png)
+
+#### Fourth Path
+
+```bash
+python motion_planning.py --goal=-122.39335608,37.79072886,3.0
+```
+
+![Fourth Path](./misc/fourth-path.png)
+
+#### Fifth Path
+
+```bash
+python motion_planning.py --goal=-122.40024939,37.796857,3.0
+```
+
+![Fifth Path](./misc/fifth-path.png)
 
 ### Double check that you've met specifications for each of the [rubric](https://review.udacity.com/#!/rubrics/1534/view) points.
   
 # Extra Challenges: Real World Planning
 
 For an extra challenge, consider implementing some of the techniques described in the "Real World Planning" lesson. You could try implementing a vehicle model to take dynamic constraints into account, or implement a replanning method to invoke if you get off course or encounter unexpected obstacles.
-
-
-These scripts contain a basic planning implementation that includes...
-
-And here's a lovely image of my results (ok this image has nothing to do with it, but it's a nice example of how to include images in your writeup!)
-![Top Down View](./misc/high_up.png)
-
-Here's | A | Snappy | Table
---- | --- | --- | ---
-1 | `highlight` | **bold** | 7.41
-2 | a | b | c
-3 | *italic* | text | 403
-4 | 2 | 3 | abcd

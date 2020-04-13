@@ -11,7 +11,7 @@ from udacidrone.frame_utils import global_to_local
 from planning_utils import create_grid
 
 # set globals
-COLLINEARITY_EPS = 1e-3
+COLLINEARITY_EPS = 1e0
 GOAL_THRESH = 1.0
 
 def three_tuple(inp):
@@ -323,6 +323,10 @@ def calculate_waypoints(global_start, global_goal, global_home, data, alt, safet
 
     # find path (if one exists)
     path, _ = graph_a_star(graph, heuristic_l1, graph_start, graph_goal)
+    
+    # return empty path if valid path could not be found for some reason
+    if len(path) == 0:
+        return path
     
     # need to add final goal position back (because it's not necessarily on the graph)
     path.append(local_goal)
